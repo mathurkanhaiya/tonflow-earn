@@ -1,0 +1,1 @@
+ALTER TABLE public.tonflow_users ADD COLUMN language_chosen BOOLEAN NOT NULL DEFAULT false;
