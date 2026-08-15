@@ -247,7 +247,8 @@ export async function referralStats(user: TonFlowUser): Promise<ReferralStats> {
     earned,
     commission,
     list: rows.map((r) => {
-      const ref = (r as { referred?: Record<string, unknown> }).referred ?? {};
+      const rawRef = (r as unknown as { referred?: unknown }).referred;
+      const ref = (Array.isArray(rawRef) ? rawRef[0] : rawRef) as Record<string, unknown> | undefined ?? {};
       return {
         username: (ref["username"] as string | null) ?? null,
         firstName: (ref["first_name"] as string | null) ?? null,
