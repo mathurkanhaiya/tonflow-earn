@@ -35,7 +35,7 @@ export type AdNetworkState = {
   dailyLimit: number;
   watchedToday: number;
   cooldownSeconds: number;
-  config: Record<string, unknown>;
+  config: Record<string, string | number | boolean | null>;
 };
 
 export type TaskState = {
@@ -190,7 +190,7 @@ export async function buildAppState(user: TonFlowUser): Promise<AppState> {
       rewardMax: Number(n.reward_max),
       dailyLimit: n.daily_limit as number,
       cooldownSeconds: n.cooldown_seconds as number,
-      config: (n.config ?? {}) as Record<string, unknown>,
+      config: (n.config ?? {}) as Record<string, string | number | boolean | null>,
       watchedToday: (adToday ?? []).filter((a) => a.network === n.network).length,
     })),
     tasks: (tasks ?? [])

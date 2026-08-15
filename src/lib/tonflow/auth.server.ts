@@ -101,10 +101,10 @@ function devFallbackAllowed() {
 }
 
 export type AuthPayload = {
-  initData?: string;
-  startParam?: string | null;
-  deviceHash?: string | null;
-  devTelegramId?: number | null;
+  initData?: string | undefined;
+  startParam?: string | null | undefined;
+  deviceHash?: string | null | undefined;
+  devTelegramId?: number | null | undefined;
 };
 
 /** Resolves (and provisions) the TonFlow account for the caller. */
