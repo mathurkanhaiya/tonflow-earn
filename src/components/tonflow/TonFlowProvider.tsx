@@ -10,7 +10,7 @@ import {
 import { toast } from "sonner";
 
 import { authPayload, tg } from "@/lib/tonflow/client";
-import { createTranslator, type TKey } from "@/lib/tonflow/i18n";
+import { createTranslator } from "@/lib/tonflow/i18n";
 import { chooseLanguage, getState } from "@/lib/tonflow/api.functions";
 import type { AppState } from "@/lib/tonflow/state.server";
 
@@ -18,7 +18,7 @@ type Ctx = {
   state: AppState | null;
   loading: boolean;
   error: string | null;
-  t: (key: TKey, vars?: Record<string, string | number>) => string;
+  t: (key: string, vars?: Record<string, string | number>) => string;
   refresh: () => Promise<void>;
   setState: (s: AppState) => void;
   pickLanguage: (lang: string) => Promise<void>;
@@ -59,7 +59,7 @@ export function TonFlowProvider({ children }: { children: ReactNode }) {
 
   const t = useMemo(() => {
     const translator = createTranslator(state?.user.language ?? "en", state?.translations ?? {});
-    return (key: TKey, vars?: Record<string, string | number>) => translator(key, vars);
+    return (key: string, vars?: Record<string, string | number>) => translator(key, vars);
   }, [state?.user.language, state?.translations]);
 
   const run = useCallback(async <T,>(fn: () => Promise<T>): Promise<T | null> => {

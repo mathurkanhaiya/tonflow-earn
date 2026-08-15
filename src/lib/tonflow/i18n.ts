@@ -676,8 +676,9 @@ export function interpolate(template: string, vars?: Record<string, string | num
 /** Creates a translator. `overrides` are admin-managed DB strings for the language. */
 export function createTranslator(lang: string, overrides: Record<string, string> = {}) {
   const code: LangCode = isLangCode(lang) ? lang : DEFAULT_LANG;
-  return (key: TKey, vars?: Record<string, string | number>) => {
-    const value = overrides[key] ?? DICTIONARIES[code][key] ?? en[key] ?? key;
+  return (key: string, vars?: Record<string, string | number>) => {
+    const k = key as TKey;
+    const value = overrides[k] ?? DICTIONARIES[code][k] ?? en[k] ?? key;
     return interpolate(value, vars);
   };
 }

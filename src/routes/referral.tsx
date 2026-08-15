@@ -85,7 +85,7 @@ function ReferralContent() {
       <GlassCard>
         <p className="text-xs text-muted-foreground">
           {t("referral.rules", {
-            amount: formatTon(s.settings.referral.reward_per_referral),
+            amount: formatTon(s.settings.referral.reward),
             percent: String(s.settings.referral.commission_percent),
           })}
         </p>

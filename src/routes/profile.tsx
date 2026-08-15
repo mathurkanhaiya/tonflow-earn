@@ -34,7 +34,7 @@ function ProfileContent() {
   const { state, t, setState, run, pickLanguage } = useTonFlow();
   const s = state as AppState;
   const [wallet, setWallet] = useState("");
-  const [amount, setAmount] = useState(String(s.settings.withdrawal.min_amount));
+  const [amount, setAmount] = useState(String(s.settings.withdrawal.minimum));
   const [busy, setBusy] = useState(false);
 
   async function withdraw() {
@@ -56,7 +56,7 @@ function ProfileContent() {
     const res = await run(() =>
       toggleNotifications({ data: { ...authPayload(), enabled: !s.user.notificationsEnabled } }),
     );
-    if (res) setState(res.state as AppState);
+    if (res) setState(res as AppState);
   }
 
   return (
@@ -86,7 +86,7 @@ function ProfileContent() {
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
           {t("withdraw.balance")}: {formatTon(s.user.balance)} TON · {t("withdraw.min")}:{" "}
-          {formatTon(s.settings.withdrawal.min_amount)} TON
+          {formatTon(s.settings.withdrawal.minimum)} TON
         </p>
         <div className="mt-3 space-y-2">
           <input
@@ -120,17 +120,17 @@ function ProfileContent() {
         </div>
         <div className="mt-3 space-y-2">
           {s.achievements.map((a) => (
-            <div key={a.code} className="rounded-2xl bg-glass px-3 py-2">
+            <div key={a.key} className="rounded-2xl bg-glass px-3 py-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium">{a.title}</span>
-                <span className={a.unlocked ? "text-success" : "text-muted-foreground"}>
-                  {a.progress}/{a.target}
+                <span className="font-medium">{a.key}</span>
+                <span className={a.claimed ? "text-success" : "text-muted-foreground"}>
+                  {a.progress}/{a.threshold}
                 </span>
               </div>
               <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-input">
                 <div
                   className="gradient-ton h-full rounded-full"
-                  style={{ width: `${Math.min(100, (a.progress / Math.max(1, a.target)) * 100)}%` }}
+                  style={{ width: `${Math.min(100, (a.progress / Math.max(1, a.threshold)) * 100)}%` }}
                 />
               </div>
             </div>
