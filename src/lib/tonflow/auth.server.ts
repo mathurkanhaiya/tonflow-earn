@@ -1,4 +1,5 @@
 import { ADMIN_TELEGRAM_ID, db } from "./db.server";
+import { isLangCode } from "./i18n";
 
 export type TgUser = {
   id: number;
@@ -29,6 +30,7 @@ export type TonFlowUser = {
   notifications_enabled: boolean;
   last_daily_reward_at: string | null;
   last_free_spin_at: string | null;
+  language_chosen: boolean;
   created_at: string;
 };
 
@@ -149,7 +151,7 @@ async function createUser(tg: TgUser, payload: AuthPayload): Promise<TonFlowUser
       first_name: tg.first_name ?? null,
       last_name: tg.last_name ?? null,
       photo_url: tg.photo_url ?? null,
-      language: null,
+      language: isLangCode(tg.language_code) ? tg.language_code : "en",
       device_hash: deviceHash,
     })
     .select("*")
