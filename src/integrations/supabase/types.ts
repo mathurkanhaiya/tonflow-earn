@@ -565,6 +565,7 @@ export type Database = {
           id: string
           is_banned: boolean
           language: string
+          language_chosen: boolean
           last_daily_reward_at: string | null
           last_free_spin_at: string | null
           last_name: string | null
@@ -590,6 +591,7 @@ export type Database = {
           id?: string
           is_banned?: boolean
           language?: string
+          language_chosen?: boolean
           last_daily_reward_at?: string | null
           last_free_spin_at?: string | null
           last_name?: string | null
@@ -615,6 +617,7 @@ export type Database = {
           id?: string
           is_banned?: boolean
           language?: string
+          language_chosen?: boolean
           last_daily_reward_at?: string | null
           last_free_spin_at?: string | null
           last_name?: string | null
