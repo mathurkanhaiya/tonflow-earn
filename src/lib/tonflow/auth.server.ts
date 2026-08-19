@@ -55,14 +55,31 @@ export async function sha256Hex(input: string): Promise<string> {
   return toHex(await crypto.subtle.digest("SHA-256", encoder.encode(input)));
 }
 
+function authDebug(reason: string, details: Record<string, unknown> = {}) {
+  console.warn("[TonFlow Telegram Auth]", reason, details);
+}
+
 /** Validates Telegram Mini App initData (HMAC-SHA256 per Telegram spec). */
 export async function verifyInitData(initData: string): Promise<TgUser | null> {
   const botToken = process.env["TELEGRAM_BOT_TOKEN"];
-  if (!botToken || !initData) return null;
+
+  if (!botToken) {
+    authDebug("MISSING_BOT_TOKEN");
+    return null;
+  }
+
+  if (!initData) {
+    authDebug("EMPTY_INIT_DATA");
+    return null;
+  }
 
   const params = new URLSearchParams(initData);
   const hash = params.get("hash");
-  if (!hash) return null;
+  if (!hash) {
+    authDebug("MISSING_HASH", { hasUser: Boolean(params.get("user")), hasAuthDate: Boolean(params.get("auth_date")) });
+    return null;
+  }
+
   params.delete("hash");
   params.delete("signature");
 
@@ -73,17 +90,43 @@ export async function verifyInitData(initData: string): Promise<TgUser | null> {
 
   const secret = await hmac(encoder.encode("WebAppData"), botToken);
   const computed = toHex(await hmac(secret, dataCheckString));
-  if (computed !== hash) return null;
+  if (computed !== hash) {
+    authDebug("HASH_MISMATCH", {
+      hasUser: Boolean(params.get("user")),
+      hasAuthDate: Boolean(params.get("auth_date")),
+      hasQueryId: Boolean(params.get("query_id")),
+      hasStartParam: Boolean(params.get("start_param")),
+    });
+    return null;
+  }
 
   const authDate = Number(params.get("auth_date") ?? 0);
-  if (!authDate || Date.now() / 1000 - authDate > 60 * 60 * 24) return null;
+  if (!authDate) {
+    authDebug("MISSING_AUTH_DATE");
+    return null;
+  }
+
+  const ageSeconds = Math.floor(Date.now() / 1000 - authDate);
+  if (ageSeconds > 60 * 60 * 24) {
+    authDebug("INIT_DATA_EXPIRED", { ageSeconds });
+    return null;
+  }
 
   const rawUser = params.get("user");
-  if (!rawUser) return null;
+  if (!rawUser) {
+    authDebug("MISSING_USER");
+    return null;
+  }
+
   try {
     const user = JSON.parse(rawUser) as TgUser;
-    return user?.id ? user : null;
+    if (!user?.id) {
+      authDebug("INVALID_USER_PAYLOAD");
+      return null;
+    }
+    return user;
   } catch {
+    authDebug("INVALID_USER_JSON");
     return null;
   }
 }
