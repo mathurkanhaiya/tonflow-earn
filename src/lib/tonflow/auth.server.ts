@@ -80,8 +80,11 @@ export async function verifyInitData(initData: string): Promise<TgUser | null> {
     return null;
   }
 
+  // For bot-token HMAC validation Telegram's data-check-string contains
+  // every received field except `hash`. The newer `signature` field must
+  // remain in this check; it is excluded only by the separate Ed25519
+  // third-party validation flow.
   params.delete("hash");
-  params.delete("signature");
 
   const dataCheckString = [...params.entries()]
     .map(([k, v]) => `${k}=${v}`)
@@ -96,6 +99,7 @@ export async function verifyInitData(initData: string): Promise<TgUser | null> {
       hasAuthDate: Boolean(params.get("auth_date")),
       hasQueryId: Boolean(params.get("query_id")),
       hasStartParam: Boolean(params.get("start_param")),
+      hasSignature: Boolean(params.get("signature")),
     });
     return null;
   }
