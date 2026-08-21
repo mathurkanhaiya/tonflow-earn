@@ -2,6 +2,8 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 let cached: SupabaseClient | null = null;
 
+const WIENER_SUPABASE_URL = "https://hvyrairuogiljplmsuat.supabase.co";
+
 function tonflowTable(name: string): string {
   return name.startsWith("tonflow_") ? name : `tonflow_${name}`;
 }
@@ -22,14 +24,13 @@ function isolateTonFlowClient(client: SupabaseClient): SupabaseClient {
   }) as SupabaseClient;
 }
 
-/** Service-role client. Server-only. TonFlow runs on a shared Supabase project,
- * so every table/RPC call is transparently namespaced to tonflow_* resources. */
+/** Service-role client. Server-only. TonFlow runs on the shared WIENER FARM
+ * Supabase project, with every table/RPC call namespaced to tonflow_* resources. */
 export function db(): SupabaseClient {
   if (!cached) {
-    const url = process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
     const key = process.env["SUPABASE_SERVICE_ROLE_KEY"];
-    if (!url || !key) throw new Error("Supabase server environment is not configured");
-    const raw = createClient(url, key, {
+    if (!key) throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured");
+    const raw = createClient(WIENER_SUPABASE_URL, key, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
     cached = isolateTonFlowClient(raw);
