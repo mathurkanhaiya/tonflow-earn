@@ -27,6 +27,21 @@ type Ctx = {
 
 const TonFlowContext = createContext<Ctx | null>(null);
 
+function cleanError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error ?? "error");
+  return message.replace(/^Error:\s*/i, "").trim() || "error";
+}
+
+async function waitForTelegramInitData(timeoutMs = 2500): Promise<void> {
+  if (typeof window === "undefined") return;
+
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    if (tg()?.initData) return;
+    await new Promise((resolve) => window.setTimeout(resolve, 100));
+  }
+}
+
 export function useTonFlow() {
   const ctx = useContext(TonFlowContext);
   if (!ctx) throw new Error("useTonFlow must be used inside TonFlowProvider");
@@ -39,12 +54,17 @@ export function TonFlowProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
+    setLoading(true);
     try {
+      // Telegram may populate WebApp.initData just after hydration on some clients.
+      // Avoid sending an empty auth request before the official SDK is ready.
+      await waitForTelegramInitData();
       const next = await getState({ data: authPayload() });
       setState(next as AppState);
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "error");
+      setState(null);
+      setError(cleanError(e));
     } finally {
       setLoading(false);
     }
@@ -66,8 +86,7 @@ export function TonFlowProvider({ children }: { children: ReactNode }) {
     try {
       return await fn();
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "error";
-      toast.error(msg.replace(/^Error:\s*/, ""));
+      toast.error(cleanError(e));
       return null;
     }
   }, []);
