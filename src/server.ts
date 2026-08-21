@@ -18,6 +18,30 @@ async function getServerEntry(): Promise<ServerEntry> {
   return serverEntryPromise;
 }
 
+async function tonflowDbHealth(): Promise<Response> {
+  try {
+    const { db } = await import("./lib/tonflow/db.server");
+    const { count, error } = await db()
+      .from("tonflow_users")
+      .select("id", { count: "exact", head: true });
+
+    if (error) {
+      return Response.json({
+        ok: false,
+        code: error.code ?? null,
+        message: error.message ?? "database_error",
+      });
+    }
+
+    return Response.json({ ok: true, count: count ?? 0 });
+  } catch (error) {
+    return Response.json({
+      ok: false,
+      message: error instanceof Error ? error.message : "unknown_error",
+    });
+  }
+}
+
 // h3 swallows in-handler throws into a normal 500 Response with body
 // {"unhandled":true,"message":"HTTPError"} — try/catch alone never fires for those.
 async function normalizeCatastrophicSsrResponse(response: Response): Promise<Response> {
@@ -47,6 +71,9 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      const url = new URL(request.url);
+      if (url.pathname === "/__tonflow_db_health") return await tonflowDbHealth();
+
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
