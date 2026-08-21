@@ -44,34 +44,9 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
-async function tonFlowHealth(): Promise<Response> {
-  let database = false;
-  let databaseError: string | null = null;
-  try {
-    const { db } = await import("./lib/tonflow/db.server");
-    const { error } = await db().from("tonflow_users").select("id").limit(1);
-    database = !error;
-    databaseError = error?.code ?? null;
-  } catch (error) {
-    databaseError = error instanceof Error ? error.message : "unknown";
-  }
-
-  return Response.json({
-    ok: Boolean(process.env["TELEGRAM_BOT_TOKEN"]) && database,
-    botTokenConfigured: Boolean(process.env["TELEGRAM_BOT_TOKEN"]),
-    supabaseUrlConfigured: Boolean(process.env["SUPABASE_URL"]),
-    supabaseServiceRoleConfigured: Boolean(process.env["SUPABASE_SERVICE_ROLE_KEY"]),
-    database,
-    databaseError,
-  });
-}
-
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
-      const url = new URL(request.url);
-      if (url.pathname === "/__tonflow_health") return await tonFlowHealth();
-
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
