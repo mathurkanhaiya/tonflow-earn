@@ -13,9 +13,14 @@ const authSchema = z.object(authInput);
 export const getState = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => authSchema.parse(raw))
   .handler(async ({ data }) => {
-    const { requireUser } = await import("./auth.server");
-    const { buildAppState } = await import("./state.server");
-    return buildAppState(await requireUser(data));
+    try {
+      const { requireUser } = await import("./auth.server");
+      const { buildAppState } = await import("./state.server");
+      return buildAppState(await requireUser(data));
+    } catch (error) {
+      console.error("[TonFlow getState]", error instanceof Error ? `${error.name}: ${error.message}` : String(error));
+      throw error;
+    }
   });
 
 export const chooseLanguage = createServerFn({ method: "POST" })
