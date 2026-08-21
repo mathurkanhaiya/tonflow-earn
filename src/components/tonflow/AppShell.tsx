@@ -51,7 +51,7 @@ function LanguageGate() {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { state, loading, error, t } = useTonFlow();
+  const { state, loading, error, t, refresh } = useTonFlow();
   const { pathname } = useLocation();
 
   if (loading)
@@ -63,16 +63,25 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
     );
 
-  if (error || !state)
+  if (error || !state) {
+    const unauthorized = error === "UNAUTHORIZED";
     return (
       <div className="flex min-h-screen items-center justify-center px-6">
-        <GlassCard className="text-center">
+        <GlassCard className="w-full max-w-sm text-center">
           <p className="text-sm text-muted-foreground">
-            {error === "UNAUTHORIZED" ? t("common.openInTelegram") : t("common.error")}
+            {unauthorized ? t("common.openInTelegram") : t("common.error")}
           </p>
+          <button
+            type="button"
+            onClick={() => void refresh()}
+            className="gradient-ton mt-4 rounded-xl px-4 py-2 text-xs font-semibold text-primary-foreground active:scale-95"
+          >
+            Try again
+          </button>
         </GlassCard>
       </div>
     );
+  }
 
   if (!state.user.languageChosen) return <LanguageGate />;
 
