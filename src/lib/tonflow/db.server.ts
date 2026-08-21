@@ -2,16 +2,37 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 let cached: SupabaseClient | null = null;
 
-/** Service-role client. Server-only: every TonFlow table is locked down and
- * reachable exclusively through validated server functions / server routes. */
+function tonflowTable(name: string): string {
+  return name.startsWith("tonflow_") ? name : `tonflow_${name}`;
+}
+
+function isolateTonFlowClient(client: SupabaseClient): SupabaseClient {
+  return new Proxy(client, {
+    get(target, prop, receiver) {
+      if (prop === "from") {
+        return (name: string) => target.from(tonflowTable(name));
+      }
+      if (prop === "rpc") {
+        return (fn: string, args?: Record<string, unknown>, options?: Record<string, unknown>) =>
+          target.rpc(fn === "credit_user" ? "tonflow_credit_user" : fn, args, options as never);
+      }
+      const value = Reflect.get(target, prop, receiver);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  }) as SupabaseClient;
+}
+
+/** Service-role client. Server-only. TonFlow runs on a shared Supabase project,
+ * so every table/RPC call is transparently namespaced to tonflow_* resources. */
 export function db(): SupabaseClient {
   if (!cached) {
     const url = process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
     const key = process.env["SUPABASE_SERVICE_ROLE_KEY"];
     if (!url || !key) throw new Error("Supabase server environment is not configured");
-    cached = createClient(url, key, {
+    const raw = createClient(url, key, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
+    cached = isolateTonFlowClient(raw);
   }
   return cached;
 }
